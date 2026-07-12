@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<title>Beepo's Workshop</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-user-select:none; user-select:none; -webkit-tap-highlight-color:transparent; }
+  :root{
+    --cream:#fff6e6; --sky:#bfe3ff; --ink:#33414f;
+  }
+  html,body{ height:100%; overflow:hidden; overscroll-behavior:none; touch-action:none; }
+  body{
+    font-family:'Baloo 2','Comic Sans MS','Trebuchet MS',system-ui,sans-serif;
+    background:linear-gradient(180deg,#d7f0ff 0%,#eaf7ff 42%,#fff6e6 100%);
+    color:var(--ink); position:fixed; inset:0;
+    display:flex; flex-direction:column;
+  }
+
+  /* ---------- STAGE ---------- */
+  #stage{ flex:1 1 auto; position:relative; display:flex; align-items:center; justify-content:center; min-height:0; }
+  #confetti{ position:absolute; inset:0; pointer-events:none; overflow:hidden; }
+
+  #machine{ position:relative; }
+  #machine.celebrate{ animation:jump .8s cubic-bezier(.3,1.4,.5,1) 1; }
+  @keyframes jump{ 0%{transform:translateY(0)} 30%{transform:translateY(-7vmin) scale(1.04)} 60%{transform:translateY(0) scale(.99)} 80%{transform:translateY(-1.5vmin)} 100%{transform:translateY(0)} }
+
+  #inner{ display:flex; flex-direction:column; align-items:center; justify-content:center; }
+  /* locomotion applied to #inner */
+  #inner.move-wheels{ animation:mv-wheels .9s ease-in-out infinite alternate; }
+  #inner.move-legs{ animation:mv-legs .6s ease-in-out infinite; }
+  #inner.move-hull{ animation:mv-hull 1.8s ease-in-out infinite alternate; transform-origin:center 80%; }
+  #inner.move-rails{ animation:mv-rails .28s ease-in-out infinite alternate; }
+  @keyframes mv-wheels{ from{transform:translateX(-2.2vmin) rotate(-1.5deg)} to{transform:translateX(2.2vmin) rotate(1.5deg)} }
+  @keyframes mv-legs{ 0%,100%{transform:translateY(0)} 45%{transform:translateY(-3.2vmin)} }
+  @keyframes mv-hull{ from{transform:rotate(-5deg)} to{transform:rotate(5deg)} }
+  @keyframes mv-rails{ from{transform:translateX(-1.4vmin)} to{transform:translateX(1.4vmin)} }
+
+  .slot{ position:relative; display:flex; align-items:center; justify-content:center; }
+  #topSlot{ width:38vmin; height:30vmin; z-index:2; }
+  #bodySlot{ width:52vmin; height:34vmin; z-index:3; margin-top:-3vmin; }
+  #baseSlot{ width:54vmin; height:20vmin; z-index:1; margin-top:-3vmin; }
+  .slot svg{ width:100%; height:100%; display:block; overflow:visible; }
+
+  /* empty placeholder */
+  .placeholder{ width:78%; height:78%; border-radius:50%; border:0.9vmin dashed #9db9cf;
+    display:flex; align-items:center; justify-content:center; color:#9db9cf; }
+  .placeholder svg{ width:40%; height:40%; opacity:.55; }
+  .slot.active .placeholder{ border-color:#ff9a3c; color:#ff9a3c; animation:pulse 1s ease-in-out infinite; }
+  @keyframes pulse{ 0%,100%{transform:scale(1);opacity:.8} 50%{transform:scale(1.09);opacity:1} }
+
+  .pop{ animation:pop .45s cubic-bezier(.3,1.5,.5,1) 1; }
+  @keyframes pop{ 0%{transform:scale(.2);opacity:0} 60%{transform:scale(1.12)} 100%{transform:scale(1);opacity:1} }
+
+  /* ---------- part sub-animations ---------- */
+  .wheel{ transform-box:fill-box; transform-origin:center; animation:spin .8s linear infinite; }
+  .wheelS{ transform-box:fill-box; transform-origin:center; animation:spin .5s linear infinite; }
+  @keyframes spin{ to{transform:rotate(360deg)} }
+  .leg{ transform-box:fill-box; transform-origin:top center; animation:swing .6s ease-in-out infinite; }
+  .leg-r{ animation-delay:-.3s; }
+  @keyframes swing{ 0%,100%{transform:rotate(-16deg)} 50%{transform:rotate(16deg)} }
+  .water{ animation:ripple 1.6s linear infinite; }
+  @keyframes ripple{ from{transform:translateX(0)} to{transform:translateX(-18px)} }
+  .smoke{ transform-box:fill-box; transform-origin:center; animation:puff 2.1s ease-out infinite; opacity:0; }
+  .s2{ animation-delay:.7s; } .s3{ animation-delay:1.4s; }
+  @keyframes puff{ 0%{transform:translateY(0) scale(.4); opacity:.9} 100%{transform:translateY(-14vmin) scale(1.5); opacity:0} }
+  .prop{ transform-box:fill-box; transform-origin:center; animation:spin .32s linear infinite; }
+  .claw-l,.claw-r{ transform-box:fill-box; transform-origin:top center; animation:grab 1s ease-in-out infinite; }
+  .claw-l{ transform-origin:top right; } .claw-r{ transform-origin:top left; }
+  @keyframes grab{ 0%,100%{transform:rotate(0)} 50%{transform:rotate(var(--o,18deg))} }
+  .claw-l{ --o:-18deg; } .claw-r{ --o:18deg; }
+  .bulb{ transform-box:fill-box; transform-origin:center; animation:glow 1s ease-in-out infinite alternate; }
+  .rays{ transform-box:fill-box; transform-origin:center; animation:glow 1s ease-in-out infinite alternate; }
+  @keyframes glow{ from{opacity:.45; filter:drop-shadow(0 0 0 #ffe07a)} to{opacity:1; filter:drop-shadow(0 0 2.2vmin #ffd23f)} }
+  .blink{ animation:blink 4s ease-in-out infinite; transform-box:fill-box; transform-origin:center; }
+  @keyframes blink{ 0%,92%,100%{transform:scaleY(1)} 96%{transform:scaleY(.1)} }
+
+  /* ---------- BANNER ---------- */
+  #banner{ flex:0 0 auto; height:11vh; display:flex; align-items:center; justify-content:center; text-align:center; padding:0 4vw; }
+  #banner .msg{ font-size:min(9vw,5vh); font-weight:800; color:#ff7a1a; text-shadow:0 0.4vh 0 #fff, 0 0.5vh 1.2vh rgba(0,0,0,.08); line-height:1.05; }
+  #banner .hint{ font-size:3vh; font-weight:700; color:#7c93a8; }
+  #banner.show .msg{ animation:pop .5s cubic-bezier(.3,1.6,.5,1) 1; }
+
+  /* ---------- TRAY ---------- */
+  #tray{ flex:0 0 auto; height:30vh; background:rgba(255,255,255,.6); border-top:0.5vh solid #ffe3b0;
+    border-radius:6vw 6vw 0 0; box-shadow:0 -0.4vh 2vh rgba(0,0,0,.06);
+    display:flex; align-items:center; justify-content:center; gap:2.4vw; padding:1.6vh 2vw; position:relative; }
+  .part{ flex:1 1 0; max-width:20vh; height:22vh; background:#fff; border-radius:4vw;
+    box-shadow:0 0.6vh 0 #e7cfa0, 0 1vh 2vh rgba(0,0,0,.10); border:0.4vh solid #ffe3b0;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; touch-action:none;
+    transition:transform .08s; }
+  .part svg{ width:82%; height:82%; pointer-events:none; }
+  .part:active{ transform:scale(.92); }
+  #tray.swap{ animation:swap .34s ease 1; }
+  @keyframes swap{ 0%{transform:translateY(0);opacity:1} 40%{transform:translateY(6vh);opacity:0} 60%{transform:translateY(6vh);opacity:0} 100%{transform:translateY(0);opacity:1} }
+
+  #again{ position:absolute; right:4vw; top:2.4vh; width:10.5vh; height:10.5vh; border-radius:50%; z-index:5;
+    background:#4cc27a; border:0.6vh solid #fff; box-shadow:0 0.8vh 0 #2f9c5b, 0 1vh 2vh rgba(0,0,0,.15);
+    display:flex; align-items:center; justify-content:center; cursor:pointer; }
+  #again svg{ width:58%; height:58%; }
+  #again:active{ transform:translateY(0.4vh) scale(.96); }
+
+  /* drag ghost */
+  #ghost{ position:fixed; width:16vh; height:16vh; pointer-events:none; z-index:99; opacity:0; transform:translate(-50%,-50%); }
+  #ghost svg{ width:100%; height:100%; }
+
+  @media (prefers-reduced-motion: reduce){
+    #inner, .smoke, .prop, .wheel, .wheelS, .leg, .water { animation-duration:2.4s !important; }
+  }
+
+  /* Shown only if JavaScript doesn't run (e.g. some in-app previews). A real browser removes it instantly. */
+  #boot{ position:absolute; inset:0; z-index:30; display:flex; align-items:center; justify-content:center; padding:9vw; text-align:center; }
+  #boot .card{ background:#fff; border:0.5vh solid #ffe3b0; border-radius:6vw; padding:7vw 6vw; box-shadow:0 1vh 3vh rgba(0,0,0,.10); max-width:88%; }
+  #boot .t{ font-size:7.5vw; font-weight:800; color:#ff7a1a; }
+  #boot .p{ font-size:4.6vw; font-weight:700; color:#7c93a8; margin-top:2.4vh; line-height:1.35; }
+</style>
+</head>
+<body>
+  <div id="stage">
+    <div id="confetti"></div>
+    <div id="again" title="Build again" aria-label="Build again">
+      <svg viewBox="0 0 100 100"><path d="M50 18 A32 32 0 1 0 82 50" fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round"/><path d="M50 4 L50 32 L74 18 Z" fill="#fff"/></svg>
+    </div>
+    <div id="machine"><div id="inner">
+      <div id="topSlot" class="slot" data-slot="top"></div>
+      <div id="bodySlot" class="slot"></div>
+      <div id="baseSlot" class="slot" data-slot="base"></div>
+    </div></div>
+    <div id="boot"><div class="card">
+      <div class="t">Beepo's Workshop</div>
+      <div class="p">Open this file in a web browser to play!<br>(Tip: pop it on Netlify like Beepo's Kitchen.)</div>
+    </div></div>
+  </div>
+
+  <div id="banner"><div class="hint">Build a machine!</div></div>
+
+  <div id="tray"></div>
+
+  <div id="ghost"></div>
+
+<script>
+"use strict";
+(function(){
+  const BASE = ['wheels','legs','hull','rails'];
+  const TOP  = ['smokestack','propeller','claw','light'];
+
+  // ---------- SVG library ----------
+  const SVG = {
+    body: `<svg viewBox="0 0 200 150">
+      <rect x="18" y="24" width="164" height="108" rx="30" fill="#ffd23f" stroke="#e8a400" stroke-width="5"/>
+      <rect x="30" y="36" width="140" height="40" rx="18" fill="#fff2c2" opacity=".7"/>
+      <circle cx="76" cy="86" r="19" fill="#fff" stroke="#e8a400" stroke-width="3"/>
+      <circle cx="124" cy="86" r="19" fill="#fff" stroke="#e8a400" stroke-width="3"/>
+      <circle class="blink" cx="79" cy="88" r="8" fill="#33414f"/>
+      <circle class="blink" cx="121" cy="88" r="8" fill="#33414f"/>
+      <path d="M84 112 Q100 124 116 112" fill="none" stroke="#c8791a" stroke-width="5" stroke-linecap="round"/>
+      <circle cx="30" cy="120" r="5" fill="#e8a400"/><circle cx="170" cy="120" r="5" fill="#e8a400"/>
+    </svg>`,
+
+    wheels: `<svg viewBox="0 0 200 100">
+      <rect x="34" y="20" width="132" height="18" rx="9" fill="#5b6b7a"/>
+      ${wheel(58,60,30)} ${wheel(142,60,30)}
+    </svg>`,
+    legs: `<svg viewBox="0 0 200 100">
+      <g class="leg leg-l"><rect x="60" y="8" width="16" height="70" rx="8" fill="#6b7a89"/><rect x="48" y="72" width="40" height="16" rx="8" fill="#4a5560"/></g>
+      <g class="leg leg-r"><rect x="124" y="8" width="16" height="70" rx="8" fill="#6b7a89"/><rect x="112" y="72" width="40" height="16" rx="8" fill="#4a5560"/></g>
+    </svg>`,
+    hull: `<svg viewBox="0 0 220 100">
+      <path d="M18 22 H202 L172 66 H48 Z" fill="#d85a34"/>
+      <rect x="18" y="16" width="184" height="12" rx="6" fill="#f0895f"/>
+      <g class="water"><path d="M-20 82 q15 -10 30 0 t30 0 t30 0 t30 0 t30 0 t30 0 t30 0" fill="none" stroke="#5bb0e6" stroke-width="7" stroke-linecap="round"/></g>
+      <g class="water" style="animation-delay:-.8s"><path d="M-20 92 q15 -9 30 0 t30 0 t30 0 t30 0 t30 0 t30 0 t30 0" fill="none" stroke="#8fd0f5" stroke-width="6" stroke-linecap="round"/></g>
+    </svg>`,
+    rails: `<svg viewBox="0 0 220 100">
+      ${wheelS(66,52,20)} ${wheelS(154,52,20)}
+      <rect x="10" y="74" width="200" height="8" rx="4" fill="#8a6a44"/>
+      <rect x="24" y="70" width="10" height="16" rx="3" fill="#6b4f30"/><rect x="66" y="70" width="10" height="16" rx="3" fill="#6b4f30"/>
+      <rect x="108" y="70" width="10" height="16" rx="3" fill="#6b4f30"/><rect x="150" y="70" width="10" height="16" rx="3" fill="#6b4f30"/><rect x="192" y="70" width="10" height="16" rx="3" fill="#6b4f30"/>
+    </svg>`,
+
+    smokestack: `<svg viewBox="0 0 120 150">
+      <circle class="smoke s3" cx="60" cy="78" r="13" fill="#cfd8e0"/>
+      <circle class="smoke s2" cx="60" cy="78" r="11" fill="#dbe3ea"/>
+      <circle class="smoke s1" cx="60" cy="78" r="9" fill="#e7edf2"/>
+      <rect x="46" y="80" width="28" height="60" rx="6" fill="#556270"/>
+      <rect x="38" y="72" width="44" height="16" rx="7" fill="#6b7a89"/>
+    </svg>`,
+    propeller: `<svg viewBox="0 0 130 130">
+      <rect x="60" y="60" width="10" height="64" rx="5" fill="#6b7a89"/>
+      <g class="prop">
+        <ellipse cx="65" cy="45" rx="15" ry="42" fill="#ff6f61"/>
+        <ellipse cx="65" cy="45" rx="42" ry="15" fill="#ff9a3c"/>
+        <circle cx="65" cy="45" r="11" fill="#4a5560"/>
+      </g>
+    </svg>`,
+    claw: `<svg viewBox="0 0 130 140">
+      <rect x="58" y="60" width="14" height="70" rx="7" fill="#6b7a89"/>
+      <rect x="46" y="46" width="38" height="18" rx="8" fill="#4a5560"/>
+      <g class="claw-l"><path d="M62 56 q-34 6 -30 44 q10 -30 30 -24 Z" fill="#ff9a3c" stroke="#e07a12" stroke-width="3"/></g>
+      <g class="claw-r"><path d="M68 56 q34 6 30 44 q-10 -30 -30 -24 Z" fill="#ff9a3c" stroke="#e07a12" stroke-width="3"/></g>
+    </svg>`,
+    light: `<svg viewBox="0 0 130 140">
+      <g class="rays" fill="#ffd23f">
+        <rect x="61" y="2" width="8" height="20" rx="4"/>
+        <rect x="18" y="20" width="8" height="20" rx="4" transform="rotate(-45 22 30)"/>
+        <rect x="104" y="20" width="8" height="20" rx="4" transform="rotate(45 108 30)"/>
+      </g>
+      <circle class="bulb" cx="65" cy="62" r="34" fill="#ffe680" stroke="#ffcb2e" stroke-width="4"/>
+      <rect x="50" y="92" width="30" height="16" rx="4" fill="#9aa7b3"/>
+      <rect x="53" y="108" width="24" height="12" rx="4" fill="#7c8996"/>
+    </svg>`,
+
+    // little tray hints for empty-slot placeholders
+    ph_base: `<svg viewBox="0 0 100 100"><circle cx="30" cy="60" r="14" fill="none" stroke="currentColor" stroke-width="8"/><circle cx="70" cy="60" r="14" fill="none" stroke="currentColor" stroke-width="8"/></svg>`,
+    ph_top: `<svg viewBox="0 0 100 100"><path d="M50 20 v40 M30 40 h40" stroke="currentColor" stroke-width="9" stroke-linecap="round" fill="none"/></svg>`
+  };
+  function wheel(cx,cy,r){ return `<g class="wheel" style="transform-box:fill-box"><circle cx="${cx}" cy="${cy}" r="${r}" fill="#2f3b47"/><circle cx="${cx}" cy="${cy}" r="${r*0.42}" fill="#9fb3c8"/><rect x="${cx-3}" y="${cy-r}" width="6" height="${2*r}" fill="#9fb3c8"/><rect x="${cx-r}" y="${cy-3}" width="${2*r}" height="6" fill="#9fb3c8"/></g>`; }
+  function wheelS(cx,cy,r){ return `<g class="wheelS" style="transform-box:fill-box"><circle cx="${cx}" cy="${cy}" r="${r}" fill="#2f3b47"/><circle cx="${cx}" cy="${cy}" r="${r*0.4}" fill="#9fb3c8"/><rect x="${cx-2}" y="${cy-r}" width="4" height="${2*r}" fill="#9fb3c8"/><rect x="${cx-r}" y="${cy-2}" width="${2*r}" height="4" fill="#9fb3c8"/></g>`; }
+
+  // ---------- recipes ----------
+  const RECIPES = {
+    '3-0':{name:'Train',    say:'Train! Choo choo!'},
+    '2-1':{name:'Boat',     say:'Boat! Toot toot!'},
+    '1-3':{name:'Robot',    say:'Robot! Beep boop!'},
+    '0-2':{name:'Digger',   say:'Digger! Scoop!'},
+    '0-0':{name:'Steam car',say:'Steam car! Putt putt!'}
+  };
+  const ADJ=['Clunky','Whirly','Bouncy','Zippy','Puffy','Wobbly'];
+  const SUF=['a-ma-jig','bot','tron','zoomer','machine'];
+  function sillyName(b,t){ const i=b*4+t; return 'The '+ADJ[i%ADJ.length]+'-'+SUF[(i*3+1)%SUF.length]; }
+
+  // ---------- audio ----------
+  let actx=null;
+  function ac(){ if(!actx){ try{ actx=new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} } if(actx&&actx.state==='suspended'){ actx.resume(); } return actx; }
+  function tone(freq,dur,type,vol,when){ const a=ac(); if(!a) return; type=type||'sine'; vol=vol==null?0.18:vol; when=when||0;
+    const t=a.currentTime+when; const o=a.createOscillator(),g=a.createGain();
+    o.type=type; o.frequency.setValueAtTime(freq,t); o.connect(g); g.connect(a.destination);
+    g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(vol,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+    o.start(t); o.stop(t+dur+0.03);
+  }
+  function slideTone(f1,f2,dur,type,vol){ const a=ac(); if(!a) return; const t=a.currentTime; const o=a.createOscillator(),g=a.createGain();
+    o.type=type||'sine'; o.frequency.setValueAtTime(f1,t); o.frequency.linearRampToValueAtTime(f2,t+dur); o.connect(g); g.connect(a.destination);
+    g.gain.setValueAtTime(0.0001,t); g.gain.exponentialRampToValueAtTime(vol||0.16,t+0.02); g.gain.exponentialRampToValueAtTime(0.0001,t+dur); o.start(t); o.stop(t+dur+0.03);
+  }
+  function clunk(){ tone(150,0.12,'square',0.16); tone(90,0.16,'sine',0.14,0.02); }
+  const PART_SOUND = {
+    wheels:()=>{ slideTone(120,180,0.28,'sawtooth',0.12); },
+    legs:()=>{ tone(90,0.1,'square',0.16); tone(90,0.1,'square',0.16,0.18); },
+    hull:()=>{ slideTone(320,260,0.4,'sine',0.14); },
+    rails:()=>{ tone(150,0.08,'square',0.14); tone(150,0.08,'square',0.14,0.14); tone(150,0.08,'square',0.14,0.28); },
+    smokestack:()=>{ slideTone(700,300,0.35,'triangle',0.1); },
+    propeller:()=>{ slideTone(300,520,0.3,'sawtooth',0.1); },
+    claw:()=>{ tone(220,0.05,'square',0.15); tone(180,0.05,'square',0.15,0.12); },
+    light:()=>{ tone(880,0.12,'sine',0.14); }
+  };
+  function jingle(){ [523,659,784,1047].forEach((f,i)=>tone(f,0.3,'triangle',0.16,i*0.11)); }
+  function speak(text){ try{ if('speechSynthesis'in window){ const u=new SpeechSynthesisUtterance(text); u.rate=0.95; u.pitch=1.35; speechSynthesis.cancel(); speechSynthesis.speak(u);} }catch(e){} }
+
+  // ---------- confetti ----------
+  const confettiLayer=document.getElementById('confetti');
+  function confettiBurst(){
+    const colors=['#ff6f61','#ffd23f','#4cc27a','#5bb0e6','#ff9a3c','#b57bff'];
+    const rect=confettiLayer.getBoundingClientRect();
+    const cx=rect.width/2, cy=rect.height*0.42;
+    for(let i=0;i<26;i++){
+      const d=document.createElement('div');
+      const size=8+Math.random()*9;
+      d.style.cssText='position:absolute;left:'+cx+'px;top:'+cy+'px;width:'+size+'px;height:'+(size*0.6)+'px;background:'+colors[i%colors.length]+';border-radius:2px;';
+      const dx=(Math.random()*2-1)*180, dy=70+Math.random()*270, rot=(Math.random()*2-1)*720;
+      d.animate([
+        {transform:'translate(0,0) rotate(0deg)',opacity:1},
+        {transform:'translate('+dx+'px,'+dy+'px) rotate('+rot+'deg)',opacity:0}
+      ],{duration:1100+Math.random()*500,easing:'cubic-bezier(.2,.7,.3,1)',fill:'forwards'});
+      confettiLayer.appendChild(d);
+      setTimeout(function(){ d.remove(); },1700);
+    }
+  }
+
+  // ---------- state ----------
+  const state={ base:null, top:null, active:'base' };
+  const topSlot=document.getElementById('topSlot');
+  const bodySlot=document.getElementById('bodySlot');
+  const baseSlot=document.getElementById('baseSlot');
+  const inner=document.getElementById('inner');
+  const machine=document.getElementById('machine');
+  const banner=document.getElementById('banner');
+  const tray=document.getElementById('tray');
+  const ghost=document.getElementById('ghost');
+
+  bodySlot.innerHTML=SVG.body;
+
+  function renderSlot(slot){
+    const el = slot==='base'?baseSlot:topSlot;
+    const idx = slot==='base'?state.base:state.top;
+    el.classList.remove('active');
+    if(idx==null){
+      el.innerHTML=`<div class="placeholder">${slot==='base'?SVG.ph_base:SVG.ph_top}</div>`;
+      if(state.active===slot) el.classList.add('active');
+    } else {
+      const name = slot==='base'?BASE[idx]:TOP[idx];
+      el.innerHTML=`<div class="pop" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center">${SVG[name]}</div>`;
+    }
+  }
+
+  function setBanner(){
+    banner.classList.remove('show');
+    if(state.base!=null && state.top!=null){
+      const key=state.base+'-'+state.top;
+      const r=RECIPES[key];
+      const nm = r? r.name : sillyName(state.base,state.top);
+      banner.innerHTML=`<div class="msg">${nm}!</div>`;
+      // reflow to restart animation
+      void banner.offsetWidth; banner.classList.add('show');
+    } else {
+      banner.innerHTML=`<div class="hint">${state.active==='base'?'Pick some wheels or legs!':'Now pick a top!'}</div>`;
+    }
+  }
+
+  function setLocomotion(){
+    inner.className='';
+    if(state.base!=null) inner.classList.add('move-'+BASE[state.base]);
+  }
+
+  function renderTray(){
+    // clear part buttons but keep #again
+    Array.from(tray.querySelectorAll('.part')).forEach(n=>n.remove());
+    const list = state.active==='base'?BASE:TOP;
+    list.forEach((name,i)=>{
+      const b=document.createElement('div');
+      b.className='part'; b.dataset.idx=i; b.dataset.name=name;
+      b.innerHTML=SVG[name];
+      tray.appendChild(b);
+    });
+    tray.classList.remove('swap'); void tray.offsetWidth; tray.classList.add('swap');
+  }
+
+  function place(idx){
+    ac();
+    const slot=state.active;
+    state[slot]=idx;
+    renderSlot(slot);
+    const name = slot==='base'?BASE[idx]:TOP[idx];
+    (PART_SOUND[name]||function(){})();
+    setLocomotion();
+
+    if(state.base!=null && state.top!=null){
+      complete();
+    } else {
+      // move to the empty slot next
+      state.active = (state.base==null)?'base':'top';
+      renderSlot('base'); renderSlot('top');
+      setBanner(); renderTray();
+    }
+  }
+
+  function complete(){
+    renderSlot('base'); renderSlot('top');
+    setBanner();
+    machine.classList.remove('celebrate'); void machine.offsetWidth; machine.classList.add('celebrate');
+    confettiBurst();
+    const key=state.base+'-'+state.top; const r=RECIPES[key];
+    setTimeout(()=>{ jingle(); speak(r? r.say : sillyName(state.base,state.top).replace('The ','')); }, 120);
+    // let them remix by tapping a slot; keep current tray on the slot they'd most likely change (top)
+    state.active='top';
+    // show a gentle "tap to change / build again" hint stays via banner name; tray shows tops for quick swap
+    renderTray();
+    markRemixable();
+  }
+
+  function markRemixable(){
+    baseSlot.style.cursor='pointer'; topSlot.style.cursor='pointer';
+  }
+
+  function reset(){
+    ac();
+    state.base=null; state.top=null; state.active='base';
+    setLocomotion();
+    renderSlot('base'); renderSlot('top');
+    setBanner(); renderTray();
+    clunk();
+  }
+
+  // tap a filled slot to re-open that slot's tray for swapping
+  function slotTap(slot){
+    if(state[slot]==null) return;
+    state.active=slot;
+    renderSlot('base'); renderSlot('top');
+    setBanner(); renderTray();
+  }
+  baseSlot.addEventListener('pointerup',()=>slotTap('base'));
+  topSlot.addEventListener('pointerup',()=>slotTap('top'));
+
+  // ---------- drag + tap on parts ----------
+  let drag=null;
+  tray.addEventListener('pointerdown',e=>{
+    const p=e.target.closest('.part'); if(!p) return;
+    ac();
+    drag={ idx:+p.dataset.idx, name:p.dataset.name, x:e.clientX, y:e.clientY, moved:false };
+    ghost.innerHTML=SVG[p.dataset.name];
+    ghost.style.left=e.clientX+'px'; ghost.style.top=e.clientY+'px'; ghost.style.opacity='1';
+    p.setPointerCapture&&p.setPointerCapture(e.pointerId);
+    e.preventDefault();
+  });
+  tray.addEventListener('pointermove',e=>{
+    if(!drag) return;
+    if(Math.abs(e.clientX-drag.x)>6||Math.abs(e.clientY-drag.y)>6) drag.moved=true;
+    ghost.style.left=e.clientX+'px'; ghost.style.top=e.clientY+'px';
+  });
+  function endDrag(){ if(!drag) return; const idx=drag.idx; drag=null; ghost.style.opacity='0'; ghost.innerHTML=''; place(idx); }
+  tray.addEventListener('pointerup',endDrag);
+  tray.addEventListener('pointercancel',()=>{ if(drag){ drag=null; ghost.style.opacity='0'; ghost.innerHTML=''; } });
+
+  document.getElementById('again').addEventListener('pointerup',e=>{ e.stopPropagation(); reset(); });
+
+  // resume audio on first touch anywhere
+  window.addEventListener('pointerdown',ac,{once:true});
+
+  // ---------- init ----------
+  reset();
+  var _boot=document.getElementById('boot'); if(_boot&&_boot.parentNode){ _boot.parentNode.removeChild(_boot); }
+})();
+</script>
+</body>
+</html>
