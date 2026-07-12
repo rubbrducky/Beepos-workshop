@@ -1,0 +1,11 @@
+# Generated animation outputs (regenerable via comfyui-anim/animate.py)
+comfyui-anim/output/*
+!comfyui-anim/output/.gitkeep
+
+# Python
+__pycache__/
+*.pyc
+
+# OS
+Thumbs.db
+.DS_Store
